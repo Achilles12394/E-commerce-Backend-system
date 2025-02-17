@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.retailflow.admin.mapper.AdminDashboardMapper">
+
+    <select id="overview" resultType="com.example.retailflow.admin.dto.DashboardOverviewResponse">
+        SELECT
+            (SELECT COUNT(1) FROM orders WHERE DATE(created_at) = CURRENT_DATE()) AS todayOrderCount,
+            (SELECT IFNULL(SUM(payable_amount), 0) FROM orders WHERE DATE(updated_at) = CURRENT_DATE() AND order_status IN ('TO_SHIP', 'SHIPPED', 'COMPLETED')) AS todayPayAmount,
+            (SELECT COUNT(1) FROM orders WHERE order_status = 'TO_SHIP') AS toShipCount,
+            (SELECT COUNT(1) FROM inventory WHERE available_stock &lt; 10) AS lowStockCount
+    </select>
+
+    <select id="hotProducts" resultType="com.example.retailflow.admin.dto.HotProductResponse">
+        SELECT oi.sku_id AS skuId,
+               oi.sku_title AS skuTitle,
+               SUM(oi.quantity) AS soldQuantity
+        FROM order_item oi
+                 JOIN orders o ON o.order_no = oi.order_no
+        WHERE o.order_status IN ('TO_SHIP', 'SHIPPED', 'COMPLETED')
+        GROUP BY oi.sku_id, oi.sku_title
+        ORDER BY soldQuantity DESC
+        LIMIT 10
+    </select>
+
+    <select id="stockAlerts" resultType="com.example.retailflow.admin.dto.StockAlertResponse">
+        SELECT sku_id AS skuId,
+               available_stock AS availableStock,
+               10 AS thresholdStock
+        FROM inventory
+        WHERE available_stock &lt; 10
+        ORDER BY available_stock ASC
+    </select>
+</mapper>

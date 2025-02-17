@@ -1,0 +1,88 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: retailflow-monolith
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:retailflow}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:root123}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: 0
+      timeout: 2s
+  elasticsearch:
+    uris: ${ES_URIS:http://localhost:9200}
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.example.retailflow
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+jwt:
+  secret: ${JWT_SECRET:replace-this-with-at-least-32-bytes-secret-123456}
+  access-expire-seconds: ${JWT_ACCESS_EXPIRE_SECONDS:1800}
+  refresh-expire-seconds: ${JWT_REFRESH_EXPIRE_SECONDS:1209600}
+
+app:
+  storage:
+    type: ${STORAGE_TYPE:local}
+    local-dir: ${UPLOAD_DIR:uploads}
+    minio:
+      endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+      public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://localhost:9000}
+      access-key: ${MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${MINIO_SECRET_KEY:minioadmin}
+      bucket: ${MINIO_BUCKET:retailflow}
+  order:
+    timeout-minutes: ${ORDER_TIMEOUT_MINUTES:30}
+  inventory:
+    alert-cron: ${INVENTORY_ALERT_CRON:0 0/30 * * * ?}
+    reconcile-cron: ${INVENTORY_RECONCILE_CRON:0 */5 * * * ?}
+  seckill:
+    preheat-cron: ${SECKILL_PREHEAT_CRON:0 */1 * * * ?}
+    reconcile-cron: ${SECKILL_RECONCILE_CRON:0 */5 * * * ?}
+    submit-lock-seconds: ${SECKILL_SUBMIT_LOCK_SECONDS:3}
+    user-rate-limit:
+      window-seconds: ${SECKILL_USER_RATE_LIMIT_WINDOW_SECONDS:1}
+      max-requests: ${SECKILL_USER_RATE_LIMIT_MAX_REQUESTS:3}
+  task:
+    scheduler:
+      order:
+        pool-size: ${ORDER_TASK_SCHEDULER_POOL_SIZE:2}
+        thread-name-prefix: ${ORDER_TASK_SCHEDULER_THREAD_PREFIX:retailflow-order-scheduler-}
+        await-termination-seconds: ${ORDER_TASK_SCHEDULER_AWAIT_TERMINATION_SECONDS:30}
+      inventory:
+        pool-size: ${INVENTORY_TASK_SCHEDULER_POOL_SIZE:2}
+        thread-name-prefix: ${INVENTORY_TASK_SCHEDULER_THREAD_PREFIX:retailflow-inventory-scheduler-}
+        await-termination-seconds: ${INVENTORY_TASK_SCHEDULER_AWAIT_TERMINATION_SECONDS:30}
+      seckill:
+        pool-size: ${SECKILL_TASK_SCHEDULER_POOL_SIZE:2}
+        thread-name-prefix: ${SECKILL_TASK_SCHEDULER_THREAD_PREFIX:retailflow-seckill-scheduler-}
+        await-termination-seconds: ${SECKILL_TASK_SCHEDULER_AWAIT_TERMINATION_SECONDS:30}
+  search:
+    elasticsearch:
+      enabled: ${ELASTICSEARCH_ENABLED:false}
+
+logging:
+  level:
+    root: INFO
+    com.example.retailflow: INFO
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

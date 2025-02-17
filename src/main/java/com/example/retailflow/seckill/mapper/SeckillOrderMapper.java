@@ -1,0 +1,9 @@
+package com.example.retailflow.seckill.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.example.retailflow.seckill.entity.SeckillOrderEntity;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface SeckillOrderMapper extends BaseMapper<SeckillOrderEntity> {
+}

@@ -1,0 +1,367 @@
+CREATE DATABASE IF NOT EXISTS retailflow DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE retailflow;
+
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user (
+  id BIGINT PRIMARY KEY,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password VARCHAR(128) NOT NULL,
+  nickname VARCHAR(64),
+  phone VARCHAR(32),
+  email VARCHAR(128),
+  status TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS role (
+  id BIGINT PRIMARY KEY,
+  code VARCHAR(64) NOT NULL UNIQUE,
+  name VARCHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS permission (
+  id BIGINT PRIMARY KEY,
+  code VARCHAR(64) NOT NULL UNIQUE,
+  name VARCHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS user_role (
+  id BIGINT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  role_id BIGINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user_role (user_id, role_id)
+);
+
+CREATE TABLE IF NOT EXISTS role_permission (
+  id BIGINT PRIMARY KEY,
+  role_id BIGINT NOT NULL,
+  permission_id BIGINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_role_perm (role_id, permission_id)
+);
+
+CREATE TABLE IF NOT EXISTS category (
+  id BIGINT PRIMARY KEY,
+  name VARCHAR(64) NOT NULL,
+  parent_id BIGINT NOT NULL DEFAULT 0,
+  sort_no INT NOT NULL DEFAULT 0,
+  status TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS brand (
+  id BIGINT PRIMARY KEY,
+  name VARCHAR(64) NOT NULL,
+  logo_url VARCHAR(255),
+  status TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS spu (
+  id BIGINT PRIMARY KEY,
+  spu_code VARCHAR(64) NOT NULL UNIQUE,
+  title VARCHAR(255) NOT NULL,
+  subtitle VARCHAR(255),
+  category_id BIGINT NOT NULL,
+  brand_id BIGINT NOT NULL,
+  publish_status TINYINT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS sku (
+  id BIGINT PRIMARY KEY,
+  sku_code VARCHAR(64) NOT NULL UNIQUE,
+  spu_id BIGINT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  price DECIMAL(12,2) NOT NULL,
+  sales_count BIGINT NOT NULL DEFAULT 0,
+  stock_status TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  KEY idx_spu_id (spu_id)
+);
+
+CREATE TABLE IF NOT EXISTS sku_image (
+  id BIGINT PRIMARY KEY,
+  sku_id BIGINT NOT NULL,
+  image_url VARCHAR(255) NOT NULL,
+  sort_no INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sku_attribute (
+  id BIGINT PRIMARY KEY,
+  sku_id BIGINT NOT NULL,
+  attr_name VARCHAR(64) NOT NULL,
+  attr_value VARCHAR(128) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS product_publish_record (
+  id BIGINT PRIMARY KEY,
+  spu_id BIGINT NOT NULL,
+  operation_type VARCHAR(32) NOT NULL,
+  operator_id BIGINT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS file_record (
+  id BIGINT PRIMARY KEY,
+  biz_type VARCHAR(32) NOT NULL,
+  biz_id BIGINT,
+  file_name VARCHAR(255) NOT NULL,
+  storage_platform VARCHAR(32) NOT NULL DEFAULT 'LOCAL',
+  bucket_name VARCHAR(128),
+  object_key VARCHAR(255) NOT NULL,
+  file_url VARCHAR(255) NOT NULL,
+  content_type VARCHAR(64),
+  file_size BIGINT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS inventory (
+  id BIGINT PRIMARY KEY,
+  sku_id BIGINT NOT NULL UNIQUE,
+  total_stock INT NOT NULL,
+  available_stock INT NOT NULL,
+  frozen_stock INT NOT NULL,
+  version INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS inventory_reservation (
+  id BIGINT PRIMARY KEY,
+  order_no VARCHAR(64) NOT NULL,
+  sku_id BIGINT NOT NULL,
+  quantity INT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_order_sku (order_no, sku_id)
+);
+
+CREATE TABLE IF NOT EXISTS inventory_log (
+  id BIGINT PRIMARY KEY,
+  sku_id BIGINT NOT NULL,
+  biz_type VARCHAR(32) NOT NULL,
+  biz_no VARCHAR(64),
+  change_amount INT NOT NULL,
+  before_available INT,
+  after_available INT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS stock_alert_record (
+  id BIGINT PRIMARY KEY,
+  sku_id BIGINT NOT NULL,
+  available_stock INT NOT NULL,
+  threshold_stock INT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cart_item (
+  id BIGINT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  sku_id BIGINT NOT NULL,
+  sku_title VARCHAR(255) NOT NULL,
+  price DECIMAL(12,2) NOT NULL,
+  quantity INT NOT NULL,
+  checked TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user_sku (user_id, sku_id)
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id BIGINT PRIMARY KEY,
+  order_no VARCHAR(64) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  order_status VARCHAR(32) NOT NULL,
+  total_amount DECIMAL(12,2) NOT NULL,
+  payable_amount DECIMAL(12,2) NOT NULL,
+  pay_time DATETIME,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  KEY idx_user_id_created_at (user_id, created_at)
+);
+
+CREATE TABLE IF NOT EXISTS order_item (
+  id BIGINT PRIMARY KEY,
+  order_no VARCHAR(64) NOT NULL,
+  sku_id BIGINT NOT NULL,
+  sku_title VARCHAR(255) NOT NULL,
+  sale_price DECIMAL(12,2) NOT NULL,
+  quantity INT NOT NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_order_no (order_no)
+);
+
+CREATE TABLE IF NOT EXISTS payment_record (
+  id BIGINT PRIMARY KEY,
+  order_no VARCHAR(64) NOT NULL,
+  pay_channel VARCHAR(32),
+  pay_status VARCHAR(32) NOT NULL,
+  pay_amount DECIMAL(12,2) NOT NULL,
+  third_trade_no VARCHAR(64),
+  paid_at DATETIME,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_order_pay (order_no)
+);
+
+CREATE TABLE IF NOT EXISTS coupon (
+  id BIGINT PRIMARY KEY,
+  coupon_code VARCHAR(64) NOT NULL UNIQUE,
+  discount_amount DECIMAL(12,2) NOT NULL,
+  min_amount DECIMAL(12,2) NOT NULL,
+  status TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_coupon (
+  id BIGINT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  coupon_id BIGINT NOT NULL,
+  use_status TINYINT NOT NULL DEFAULT 0,
+  used_order_no VARCHAR(64),
+  used_at DATETIME,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user_coupon (user_id, coupon_id)
+);
+
+CREATE TABLE IF NOT EXISTS order_operate_log (
+  id BIGINT PRIMARY KEY,
+  order_no VARCHAR(64) NOT NULL,
+  operate_type VARCHAR(32) NOT NULL,
+  operator_id BIGINT,
+  remark VARCHAR(255),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_order_operate (order_no)
+);
+
+CREATE TABLE IF NOT EXISTS seckill_activity (
+  id BIGINT PRIMARY KEY,
+  activity_name VARCHAR(128) NOT NULL,
+  start_time DATETIME NOT NULL,
+  end_time DATETIME NOT NULL,
+  status TINYINT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS seckill_activity_sku (
+  id BIGINT PRIMARY KEY,
+  activity_id BIGINT NOT NULL,
+  sku_id BIGINT NOT NULL,
+  seckill_price DECIMAL(12,2) NOT NULL,
+  seckill_stock INT NOT NULL,
+  limit_per_user INT NOT NULL DEFAULT 1,
+  status TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_activity_sku (activity_id, sku_id),
+  KEY idx_activity_id (activity_id)
+);
+
+CREATE TABLE IF NOT EXISTS seckill_order (
+  id BIGINT PRIMARY KEY,
+  order_no VARCHAR(64) NOT NULL UNIQUE,
+  activity_id BIGINT NOT NULL,
+  sku_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  quantity INT NOT NULL,
+  seckill_price DECIMAL(12,2) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_activity_user (activity_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS idempotent_token (
+  id BIGINT PRIMARY KEY,
+  token VARCHAR(128) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  biz_type VARCHAR(32) NOT NULL,
+  expired_at DATETIME NOT NULL,
+  used TINYINT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO role (id, code, name) VALUES
+(1001, 'ADMIN', '管理员'),
+(1002, 'CUSTOMER', '普通用户'),
+(1003, 'WAREHOUSE', '仓储人员')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO permission (id, code, name) VALUES
+(2001, 'product:create', '商品创建'),
+(2002, 'product:update', '商品更新'),
+(2003, 'product:publish', '商品上下架'),
+(2004, 'inventory:update', '库存更新'),
+(2005, 'inventory:release', '库存释放'),
+(2006, 'order:view', '订单查看'),
+(2007, 'order:ship', '订单发货'),
+(2008, 'dashboard:view', '仪表盘查看')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO user (id, username, password, nickname, status) VALUES
+(3001, 'admin', '$2a$10$FiYx1j5fSnlXefM0v8F5WONa2QWw0jtH6V0urN0Y1c4iN9HgwTFv6', '系统管理员', 1),
+(3002, 'user1', '$2a$10$QMC9Vun4x79Y8qi6t4fI5e8vR0Y5Q.Q5H9Q6sM2rgoE7q9xY0D5RW', '普通用户', 1)
+ON DUPLICATE KEY UPDATE nickname = VALUES(nickname);
+
+INSERT INTO user_role (id, user_id, role_id) VALUES
+(4001, 3001, 1001),
+(4002, 3002, 1002)
+ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
+
+INSERT INTO role_permission (id, role_id, permission_id) VALUES
+(5001, 1001, 2001), (5002, 1001, 2002), (5003, 1001, 2003), (5004, 1001, 2004),
+(5005, 1001, 2005), (5006, 1001, 2006), (5007, 1001, 2007), (5008, 1001, 2008)
+ON DUPLICATE KEY UPDATE permission_id = VALUES(permission_id);
+
+INSERT INTO category (id, name, parent_id, sort_no, status) VALUES
+(6001, '数码', 0, 1, 1),
+(6002, '家电', 0, 2, 1)
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO brand (id, name, logo_url, status) VALUES
+(7001, 'RetailFlow', '', 1),
+(7002, 'DemoBrand', '', 1)
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO spu (id, spu_code, title, subtitle, category_id, brand_id, publish_status) VALUES
+(8001, 'SPU-1001', '无线耳机', '降噪蓝牙耳机', 6001, 7001, 1),
+(8002, 'SPU-1002', '智能台灯', '护眼调光台灯', 6002, 7002, 1)
+ON DUPLICATE KEY UPDATE title = VALUES(title);
+
+INSERT INTO sku (id, sku_code, spu_id, title, price, sales_count, stock_status) VALUES
+(9001, 'SKU-1001', 8001, '无线耳机-黑色', 299.00, 120, 1),
+(9002, 'SKU-1002', 8002, '智能台灯-标准版', 159.00, 85, 1)
+ON DUPLICATE KEY UPDATE price = VALUES(price);
+
+INSERT INTO inventory (id, sku_id, total_stock, available_stock, frozen_stock, version) VALUES
+(9101, 9001, 500, 500, 0, 0),
+(9102, 9002, 300, 300, 0, 0)
+ON DUPLICATE KEY UPDATE available_stock = VALUES(available_stock);

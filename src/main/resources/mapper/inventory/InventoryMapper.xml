@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.retailflow.inventory.mapper.InventoryMapper">
+
+    <update id="reserve">
+        UPDATE inventory
+        SET available_stock = available_stock - #{quantity},
+            frozen_stock = frozen_stock + #{quantity},
+            version = version + 1
+        WHERE sku_id = #{skuId}
+          AND available_stock &gt;= #{quantity}
+    </update>
+
+    <update id="confirmDeduct">
+        UPDATE inventory
+        SET frozen_stock = frozen_stock - #{quantity},
+            version = version + 1
+        WHERE sku_id = #{skuId}
+          AND frozen_stock &gt;= #{quantity}
+    </update>
+
+    <update id="release">
+        UPDATE inventory
+        SET available_stock = available_stock + #{quantity},
+            frozen_stock = frozen_stock - #{quantity},
+            version = version + 1
+        WHERE sku_id = #{skuId}
+          AND frozen_stock &gt;= #{quantity}
+    </update>
+</mapper>
