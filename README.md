@@ -1,11 +1,9 @@
-﻿# RetailFlow
 
-RetailFlow 是一个基于 Spring Boot 3 的电商后台单体项目，覆盖认证鉴权、商品管理、购物车、订单、库存、搜索、对象存储，以及面向高并发场景的库存预扣和秒杀扩展能力。
+
+本项目是一个基于 Spring Boot 3 的电商后台单体项目，覆盖认证鉴权、商品管理、购物车、订单、库存、搜索、对象存储，以及面向高并发场景的库存预扣和秒杀扩展能力。
 
 ## 项目定位
-- 适合用于简历展示、面试讲解和本地快速运行。
-- 采用模块化单体架构，重点把电商核心业务链路做完整。
-- 技术取舍偏务实，优先保证链路清晰、数据一致性和可讲解性。
+- 采用模块化单体架构，电商核心业务链路完整。
 
 ## 技术栈
 - Java 17
@@ -90,7 +88,6 @@ src/main/java/com/example/retailflow
 执行：
 - `sql/init-mysql.sql`
 
-当前建表脚本包含 28 张表，覆盖认证、商品、库存、订单和秒杀五个业务域。
 
 ### 3. 启动应用
 ```bash
@@ -116,11 +113,6 @@ mvn spring-boot:run
 - 秒杀任务线程池：`app.task.scheduler.seckill.*`
 - ES 搜索开关：`app.search.elasticsearch.enabled`
 
-## 推荐阅读文档
-- `docs/architecture/big-tech-interview-prep.md`
-- `docs/architecture/interview-business-flow.md`
-- `docs/architecture/database-schema-business-map.md`
-- `docs/resume/retailflow-resume-entry.md`
 
 ## 当前项目特点总结
 - 不是单纯的 CRUD 项目，而是把认证、搜索、下单、库存和秒杀链路串成了完整业务闭环。
